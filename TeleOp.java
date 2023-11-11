@@ -41,10 +41,10 @@ import com.qualcomm.robotcore.util.Range;
  * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
  * of the FTC Driver Station. When an selection is made from the menu, the corresponding OpMode
  * class is instantiated on the Robot Controller and executed.
- *
+ * <p>
  * This particular OpMode just executes a basic Tank Drive Teleop for a two wheeled robot
  * It includes all the skeletal structure that all linear OpModes contain.
- *
+    * <p>
  * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
@@ -54,35 +54,36 @@ import com.qualcomm.robotcore.util.Range;
 public class TeleOp extends LinearOpMode {
 
     // Declare OpMode members.
-    private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor leftDrive = null;
-    private DcMotor rightDrive = null;
-    private DcMotor leftBackDrive = null;
-    private DcMotor rightBackDrive = null;
+    private final ElapsedTime runtime = new ElapsedTime();
 
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
+
+
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        leftDrive  = hardwareMap.get(DcMotor.class, "leftFront");
-        rightDrive = hardwareMap.get(DcMotor.class, "rightFront");
-        leftBackDrive  = hardwareMap.get(DcMotor.class, "leftBack");
-        rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack");
+        DcMotor leftDrive = hardwareMap.get(DcMotor.class, "leftFront");
+        DcMotor rightDrive = hardwareMap.get(DcMotor.class, "rightFront");
+        DcMotor leftBackDrive = hardwareMap.get(DcMotor.class, "leftBack");
+        DcMotor rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack");
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        leftDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightDrive.setDirection(DcMotor.Direction.REVERSE);
-        leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
-
+        leftDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
+
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -93,6 +94,7 @@ public class TeleOp extends LinearOpMode {
             double leftBackPower;
             double rightBackPower;
 
+
             // Choose to drive using either Tank Mode, or POV Mode
             // Comment out the method that's not used.  The default below is POV.
 
@@ -100,19 +102,22 @@ public class TeleOp extends LinearOpMode {
             // - This uses basic math to combine motions and is easier to drive straight.
             double drive = -gamepad1.left_stick_y;
             double turn  =  gamepad1.right_stick_x;
-            leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
-            rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
-            leftBackPower    = Range.clip(drive + turn, -1.0, 1.0) ;
-            rightBackPower   = Range.clip(drive - turn, -1.0, 1.0) ;
 
 
-            while  (gamepad1.left_bumper){
-                leftPower    = Range.clip(drive + turn, -0.5, 0.5) ;
-                rightPower   = Range.clip(drive - turn, -0.5, 0.5) ;
-                leftBackPower    = Range.clip(drive + turn, -0.5, 0.5) ;
-                rightBackPower   = Range.clip(drive - turn, -0.5, 0.5) ;
-            }
 
+           if (gamepad1.left_bumper)
+           {
+               leftPower = Range.clip(drive + turn, -0.5, 0.5);
+               rightPower = Range.clip(drive + turn, -0.5, 0.5);
+               leftBackPower = Range.clip(drive + turn, -0.5, 0.5);
+               rightBackPower = Range.clip(drive + turn, -0.5, 0.5);
+           }
+           else {
+               leftPower = Range.clip(drive + turn, -1, 1);
+               rightPower = Range.clip(drive + turn, -1, 1);
+               leftBackPower = Range.clip(drive + turn, -1, 1);
+               rightBackPower = Range.clip(drive + turn, -1, 1);
+           }
             // Tank Mode uses one stick to control each wheel.
             // - This requires no math, but it is hard to drive forward slowly and keep straight.
             // leftPower  = -gamepad1.left_stick_y ;
@@ -125,8 +130,9 @@ public class TeleOp extends LinearOpMode {
             rightBackDrive.setPower(rightBackPower);
 
             // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
+            telemetry.addData("Status", "Run Time: " + runtime);
             telemetry.addData("Motors", "left (%.2f), right (%.2f), left back (%.2f), right back (&.2f)", leftPower, rightPower, leftBackPower, rightBackPower);
+            telemetry.addData("Current Ticks", leftDrive.getCurrentPosition());
             telemetry.update();
         }
     }
